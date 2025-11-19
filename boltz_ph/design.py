@@ -113,6 +113,10 @@ def parse_args():
     parser.add_argument("--high_plddt_threshold", default=0.8, type=float)
     # --- End Existing Arguments ---
 
+    # try templates
+    parser.add_argument("--template_path", default = "", type = str)
+    parser.add_argument("--template_guidance_scale", default = 0.5, type = float)
+    ## default number is 0.5; 0 means free designing and 1 means strongly fit the template when designing
     return parser.parse_args()
 
 def print_args(args):
