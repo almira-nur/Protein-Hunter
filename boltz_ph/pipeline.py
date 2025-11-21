@@ -301,8 +301,41 @@ class ProteinHunter_Boltz:
         self.protein_hunter_save_dir = self.data_builder.protein_hunter_save_dir
         self.binder_chain = "A"
 
+        #template purposes
+        if args.template_path:
+            pdb_file = args.template_path.split(",")[0]
+            template_coords = self.load_backbone_template(pdb_file, atom="CA")
+            L_template = template_coords.shape[0]
+            target_len = args.max_protein_length
+            template_coords = self.resample_template(template_coords, target_len)
+            self.template_coords = torch.tensor(template_coords, dtype=torch.float32, device=self.device)
+        else:
+            self.template_coords = None
+
         print("✅ ProteinHunter_Boltz initialized.")
 
+    def load_backbone_template(self, pdb_file, atom="CA"):
+        parser = PDBParser(QUIET=True)
+        structure = parser.get_structure("template", pdb_file)
+        coords = []
+        for res in structure.get_residues():
+            if atom in res:
+                coords.append(res[atom].get_coord())
+        return np.array(coords)
+
+    def resample_template(self, coords, target_length):
+        """Interpolate or compress/expand template coords to match target_length."""
+        L = coords.shape[0]
+        if L == target_length:
+            return coords
+        # Linear interpolation
+        x_old = np.linspace(0, 1, L)
+        x_new = np.linspace(0, 1, target_length)
+        interp = interp1d(x_old, coords, axis=0)
+        new_coords = interp(x_new)
+        return new_coords
+        
+    
     def _load_boltz_model(self):
         """Loads and configures the Boltz model."""
         predict_args = {
